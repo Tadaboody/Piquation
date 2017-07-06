@@ -1,6 +1,6 @@
 import numpy
 import cv2
-
+aa
 
 def remove_page_grid(image):  # numpy.median is a function
     median_size = 7
