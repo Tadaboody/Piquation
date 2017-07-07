@@ -19,19 +19,19 @@ def left_to_right_contours(contours):
     return sorted_contours
 
 
-def main():
-    image_name = "source/sample.jpg"
+def main(file_name = "source/test.jpg"):
+    image_name = "source/test.jpg"
     color_image = cv2.imread(image_name, 1)
     cv2.imshow("orig", color_image)
     image = cv2.imread(image_name, 0)
-    ret, image = cv2.threshold(image, 90, 255, cv2.THRESH_BINARY)  # TODO: dynamic thresholding
+    ret, image = cv2.threshold(image, 130, 255, cv2.THRESH_BINARY)  # TODO: dynamic thresholding
     cv2.medianBlur(image, 9, image)
     cv2.imshow("pre_cont", image)
     cont_image, contours, hierarchy = cv2.findContours(image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     left_to_right = left_to_right_contours(contours)
     for i in xrange(len(left_to_right)):
         cv2.putText(color_image,str(i),leftmost_point(left_to_right[i]),cv2.FONT_HERSHEY_COMPLEX,2,(0,0,255),5)
-    main_contour = contours[2]
+    # main_contour = contours[2]
     # leftmost = tuple(main_contour[main_contour[:, :, 0].argmin()][0])
     # print leftmost
     # rect = cv2.minAreaRect(main_contour)
