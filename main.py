@@ -1,6 +1,6 @@
 import cv2
 
-
+#RUINED
 def leftmost_point(contour):
     return tuple(contour[contour[:, :, 0].argmin()][0])
 
@@ -19,11 +19,11 @@ def left_to_right_contours(contours):
     return sorted_contours
 
 
-def main(image_name="source/y2.jpg"):
+def main(image_name="source/sample.jpg"):
     color_image = cv2.imread(image_name, 1)
     cv2.imshow("orig", color_image)
     image = cv2.imread(image_name, 0)
-    ret, image = cv2.threshold(image, 60, 255, cv2.THRESH_BINARY)  # TODO: dynamic thresholding
+    ret, image = cv2.threshold(image, 127, 255, cv2.ADAPTIVE_THRESH_MEAN_C)  # TODO: dynamic thresholding
     cv2.medianBlur(image, 9, image)
     cv2.imshow("pre_cont", image)
     cont_image, contours, hierarchy = cv2.findContours(image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
