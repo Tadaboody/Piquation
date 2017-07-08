@@ -14,7 +14,7 @@ def vertical_median_filter(image, size):
     size = (size - 1) / 2
     image_copy = copy(image)
     re_median_arr = numpy.zeros((len(image), len(image[0])))
-    print len(image_copy[0  ])
+    print len(image_copy[0])
     for i, line in enumerate(image):
         image_copy[i] = copy(image[i]) + copy(image[i]) + copy(image[i])
     print len(image_copy[0])

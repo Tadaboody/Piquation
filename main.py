@@ -19,8 +19,8 @@ def left_to_right_contours(contours):
     return sorted_contours
 
 
-def main(image_name="source/y2.jpg"):
-    color_image = cv2.imread("squares.png", 1)
+def main():
+    color_image = cv2.imread("source/squares.png")
     #  a = [[1,2,3,4,5], [6,7,8,9,10], [11,12,13,14,15], [11,12,13,14,15], [11,12,13,14,15]]
     cv2.imshow("before", color_image)
     cv2.waitKey(0)
