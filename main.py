@@ -1,5 +1,6 @@
 import cv2
 import remove_grid
+import numpy
 
 def leftmost_point(contour):
     return tuple(contour[contour[:, :, 0].argmin()][0])
@@ -20,12 +21,16 @@ def left_to_right_contours(contours):
 
 
 def main():
-    color_image = cv2.imread("source/squares.png")
+    color_image = cv2.imread("source/squares.png", 0)
     #  a = [[1,2,3,4,5], [6,7,8,9,10], [11,12,13,14,15], [11,12,13,14,15], [11,12,13,14,15]]
     cv2.imshow("before", color_image)
+    print color_image
     cv2.waitKey(0)
-    color_image = remove_grid.vertical_median_filter(color_image, 3)
+    color_image = remove_grid.horizontal_median_filter(color_image, 3)
+    print color_image
     cv2.imshow("after", color_image)
+
+    cv2.waitKey(0)
 
 """
 def main(image_name="source/y2.jpg"):
