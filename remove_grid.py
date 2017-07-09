@@ -3,11 +3,8 @@ import cv2
 
 
 def remove_page_grid(image, median_size):  # numpy.median is a function
-    cv2.imshow("before", image)
     return_image = horizontal_median_filter(image, median_size)
-    cv2.imshow("after 1", return_image)
     return_image = vertical_median_filter(return_image, median_size)
-    cv2.imshow("after 2", return_image)
     return return_image
 
 
