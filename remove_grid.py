@@ -21,8 +21,10 @@ def horizontal_median_filter(image, size):
         for j in range(len(image_copy[i])):
             image_copy[i][j] = image[i][j % len(image[i])]
 
+    last_value = 0
     index = len(image[0])
     for i in range(len(image)):
+        last_value = progress_bar(i, last_value,    float(len(image)))
         for j in range(index, 2*index):
             temp = image_copy[i][j - size:j + 1 + size]
             re_median_arr[i][j - index - 1] = sorted(list(temp))[len(temp) / 2]
@@ -43,11 +45,18 @@ def vertical_median_filter(image, size):
             image_copy[i][j] = image[i % len(image)][j]
 
     index = len(image)
+    last_value = 0
     for i in range(index, 2 * index):
+        last_value = progress_bar(i-index, last_value, float(len(image)))
         for j in range(len(image_copy[i])):
-            # print t, len(image_copy[i - size:i + size + 1])
             temp = [element[j] for element in image_copy[i - size:i + size + 1]]
-            #  print temp, len(temp)
             re_median_arr[i - index - 1][j] = sorted(list(temp))[len(temp) / 2]
     return re_median_arr
 
+
+def progress_bar(value, last_value, max_value):
+    progress = float(int(1000*float(value)/max_value))/1000
+    if progress != last_value:
+        print 100*progress, '%'
+        return progress
+    return last_value
