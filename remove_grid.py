@@ -31,7 +31,7 @@ def horizontal_median_filter(image, size):
 
 def vertical_median_filter(image, size):
     size = (size - 1) / 2
-    image_copy = list(numpy.zeros(3 * (len(image), len(image[0])), numpy.uint8))
+    image_copy = numpy.zeros((3 * len(image), len(image[0])), numpy.uint8)
 
     for i, line in enumerate(image_copy[:]):
         image_copy[i] = list(line)
@@ -45,8 +45,9 @@ def vertical_median_filter(image, size):
     index = len(image)
     for i in range(index, 2 * index):
         for j in range(len(image_copy[i])):
-            #  temp = image_copy[i][j - size:j + 1 + size]
-            temp = [element[0] for element in image_copy[i - size:i + size + 1]]
+            # print t, len(image_copy[i - size:i + size + 1])
+            temp = [element[j] for element in image_copy[i - size:i + size + 1]]
+            #  print temp, len(temp)
             re_median_arr[i - index - 1][j] = sorted(list(temp))[len(temp) / 2]
     return re_median_arr
 
