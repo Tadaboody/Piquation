@@ -1,6 +1,7 @@
 import cv2
 from remove_grid import remove_page_grid
 import copy
+from os import walk
 
 
 def leftmost_point(contour):
@@ -57,26 +58,39 @@ def contour_stuff(threshed_image, drawable_image):
 
 # TODO: streamline data addition process
 
-def main(image_name="resources/3.jpg"):
-    color_image = cv2.imread(image_name, 1)
-    cv2.imshow("orig", color_image)
-    image = cv2.imread(image_name, 0)
-    # increase_contrast_brightness(image,1.5,0)
+def pre_process(image):
     length = max(len(image), len(image[0]))
     image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,
                                   int(length / 15) + length / 15 % 2 - 1,
                                   15)  # TODO:maybe less of a bodge Note- doesn't work well with whatsapp compressed
     # images
     cv2.medianBlur(image, 9, image)
-    cv2.imshow("threshed", image)
     cv2.imwrite("Output/threshed.png", image)
-    components = find_connected_components(image, EIGHT_WAY_NEIGHBORS)
+    return image
 
-    for index, component in enumerate(components):
+
+def save_resource(image, components, name, drawable_image=None):
+    for (dirpath, dirnames, filenames) in walk("Resources/" + name):
+        pass  # reads file names and saves components as highest num in names+1.png
+    for index, component in enumerate(components):  # will overwrite every time
         cv2.imwrite("Resources/3/" + str(index) + ".png", crop_to_component(image, component))
-        draw_component(color_image, component)
-    cv2.imwrite("Output/output.png", color_image)
-    cv2.imshow("conts", color_image)
+
+
+def main(source="resources/3.jpg", character='3'):
+    draw = input("draw result? 1/0")
+    if draw:
+        color_image = cv2.imread(source, 1)
+    else:
+        color_image = None
+    image = cv2.imread(source, 0)
+    # increase_contrast_brightness(image,1.5,0)
+    image = pre_process(image)
+    components = find_connected_components(image, EIGHT_WAY_NEIGHBORS)
+    save_resource(image, components, character,color_image)
+    if draw:
+        for component in find_connected_components(image, EIGHT_WAY_NEIGHBORS):
+            draw_component(color_image, component)
+        cv2.imshow("result", color_image)  # only if you want it to draw
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
