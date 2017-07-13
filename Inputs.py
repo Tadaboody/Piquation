@@ -1,5 +1,5 @@
 import cv2
-import exceptions
+import extractor
 from main import main
 
 class NoCameraException(Exception):
@@ -15,7 +15,7 @@ def take_pic(pic_name):
         ret, image = cap.read()
         cv2.imshow("hey", image)
         cv2.imwrite(pic_name, image)
-        main(pic_name)
+        extractor.main(pic_name)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
