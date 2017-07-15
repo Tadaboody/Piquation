@@ -1,7 +1,9 @@
 import cv2
 from remove_grid import remove_page_grid
 import copy
-from os import walk
+import os
+import sys
+import uuid
 
 
 def leftmost_point(contour):
@@ -30,12 +32,12 @@ def increase_contrast_brightness(image, alpha, beta):
     for i in xrange(len(image)):
         for j in xrange(len(image[i])):
             image[i][j] = image[i][j] * alpha + beta
+    return image
 
 
 def draw_component(image, component):
-    """Draws frame of component on the image"""
-    for point in component.points:
-        point = reverse(point)
+    """Draws component and frame of component on the image"""
+    for point in component.reversed_points():
         cv2.rectangle(image, point, point, (255, 0, 0))
     cv2.rectangle(image, reverse(component.upper_left_point()), reverse(component.lower_right_point()), (255, 0, 0))
 
@@ -60,38 +62,41 @@ def contour_stuff(threshed_image, drawable_image):
 
 def pre_process(image):
     length = max(len(image), len(image[0]))
+    print length
     image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,
-                                  int(length / 15) + length / 15 % 2 - 1,
-                                  15)  # TODO:maybe less of a bodge Note- doesn't work well with whatsapp compressed
-    # images
+                                  int(length / 15) + length / 15 % 2 + 1,
+                                  15)  # TODO:C is not dynamic and does matter Note- doesn't work well with whatsapp
+    # compressed images
     cv2.medianBlur(image, 9, image)
     cv2.imwrite("Output/threshed.png", image)
     return image
 
 
-def save_resource(image, components, name, drawable_image=None):
-    for (dirpath, dirnames, filenames) in walk("Resources/" + name):
-        pass  # reads file names and saves components as highest num in names+1.png
-    for index, component in enumerate(components):  # will overwrite every time
-        cv2.imwrite("Resources/3/" + str(index) + ".png", crop_to_component(image, component))
+def save_resource(image, components, name):
+    # reads file names and saves components as highest num in names+1.png
+    location = "Resources/" + name + "/"
+    for component in components:
+        i = 0
+        while os.path.exists(location + name + "_" + str(i) + ".png"):
+            i += 1
+        cv2.imwrite(location + name + '_' + str(i) + ".png", crop_to_component(image, component))
 
 
-def main(source="resources/3.jpg", character='3'):
-    draw = input("draw result? 1/0")
-    if draw:
-        color_image = cv2.imread(source, 1)
-    else:
-        color_image = None
+def main(source="resources/x.png", character='x'):
     image = cv2.imread(source, 0)
     # increase_contrast_brightness(image,1.5,0)
     image = pre_process(image)
-    components = find_connected_components(image, EIGHT_WAY_NEIGHBORS)
-    save_resource(image, components, character,color_image)
-    if draw:
-        for component in find_connected_components(image, EIGHT_WAY_NEIGHBORS):
-            draw_component(color_image, component)
-        cv2.imshow("result", color_image)  # only if you want it to draw
-    cv2.waitKey(0)
+    color_image = cv2.imread(source, 1)
+    for component in find_connected_components(image, EIGHT_WAY_NEIGHBORS):
+        draw_component(color_image, component)
+    cv2.imshow("result", color_image)  # only if you want it to draw
+    print "Press S to save, any other char to quit"
+    if cv2.waitKey(0) & 0xFF == ord('s'):  # saves if you press S
+        print('Saved!')
+        components = find_connected_components(image, EIGHT_WAY_NEIGHBORS)
+        save_resource(image, components, character)
+
+    # cv2.waitKey(0)
     cv2.destroyAllWindows()
 
 
@@ -101,6 +106,9 @@ class Component:
 
     def add_point(self, point):
         self.points.append(point)
+
+    def reversed_points(self):
+        return (reverse(point) for point in self.points)
 
     def upper_left_point(self):
         return min(self.points, key=lambda x: x[0])[0], min(self.points, key=lambda x: x[1])[1]
@@ -152,7 +160,7 @@ def connected_component_starting_from(image, i, j, connectivity=FOUR_WAY_NEIGHBO
     return return_value
 
 
-def find_connected_components(image, connectivity=FOUR_WAY_NEIGHBORS):
+def find_connected_components(image, connectivity=EIGHT_WAY_NEIGHBORS):
     new_image = copy.copy(image)
     for i in xrange(len(new_image)):
         for j in xrange(len(new_image[i])):
@@ -161,4 +169,7 @@ def find_connected_components(image, connectivity=FOUR_WAY_NEIGHBORS):
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) is 3:  # first argument is always the file name
+        main(sys.argv[1], sys.argv[2])
+    else:
+        main()
