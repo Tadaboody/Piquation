@@ -1,13 +1,8 @@
 from sklearn.svm import LinearSVC
 import os
 import cv2
-import numpy
 
 SIZE = (30, 30)
-
-
-def pre_proccess(image):
-    return cv2.resize(image, SIZE).flatten()
 
 
 def char_not_empty(char):
@@ -30,16 +25,26 @@ def load_data_from_resources(character):
 
 
 # x_classifier = LinearSVC()
-def model():
-    datasets = [load_data_from_resources(character) for character in next(os.walk("resources"))[1] if char_not_empty(character)]
-    data = []
-    target = []
-    for datas, targets in datasets:
-        data.extend(datas)
-        target.extend(targets)
-    shape = [image.shape for image in data]
-    data = [pre_proccess(image) for image in data]
-    # data_train, data_test, target_train, target_test = train_test_split(data, target, test_size=0.50 ) #for testing
-    clf = LinearSVC()
-    clf.fit(data, target)
-    return clf
+
+class Classifier(LinearSVC):
+    def __init__(self):
+        super(Classifier, self).__init__()
+        datasets = [load_data_from_resources(character) for character in next(os.walk("resources"))[1] if
+                    char_not_empty(character)]
+        data = []
+        target = []
+        for datas, targets in datasets:
+            data.extend(datas)
+            target.extend(targets)
+        # shape = [image.shape for image in data]
+        data = [self.pre_proccess(image) for image in data]
+        # data_train, data_test, target_train, target_test = train_test_split(data, target, test_size=0.30 ) #for testing
+        self.fit(data, target)
+
+    @staticmethod
+    def pre_proccess(image):
+        return cv2.resize(image, SIZE).flatten()
+
+    def predict(self, components):
+        to = [self.pre_proccess(component.image()) for component in components]
+        return super(Classifier, self).predict(to)

@@ -1,6 +1,7 @@
 import cv2
 import extractor
-
+from test import predict_and_print_image
+from extractor import Image
 
 class NoCameraException(Exception):
     def __str__(self):
@@ -14,18 +15,18 @@ def take_pic(pic_name):
     while cap:
         ret, color_image = cap.read()
         # cv2.imshow("hey", color_image)
-        gray_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
-        gray_image = extractor.pre_process(gray_image)
-        # cv2.imshow("thresh", gray_image)
-        components = extractor.find_connected_components(gray_image, connectivity=extractor.EIGHT_WAY_NEIGHBORS)
-        for component in components:
-            extractor.draw_component(color_image, component)
-        cv2.imshow("after", color_image)
-        # extractor.main(pic_name)
-        # cv2.imwrite(pic_name, gray_image)
+        image = Image(color_image=color_image)
+        # try:
+        predict_and_print_image(image)
+        if cv2.waitKey(1) & 0xFF == ord('p'):
+            cv2.waitKey(0)
+        # except:
+        #     cv2.imshow("im",color_image)
         if cv2.waitKey(1) & 0xFF == ord('s'):
-            cv2.imwrite("Output/webcam.png",gray_image)
+            cv2.imwrite("Output/webcam.png",image.bw_image)
             print "Saved!"
+            break
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
             # def main():
 #     take_pic("test.jpg")

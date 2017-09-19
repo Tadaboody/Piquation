@@ -6,24 +6,6 @@ import sys
 import uuid
 
 
-def leftmost_point(contour):
-    return tuple(contour[contour[:, :, 0].argmin()][0])
-
-
-def left_to_right_contours(contours):
-    """given a list of contours returns a list of the same contours sorted by leftmost """
-    # leftmost_array = [(leftmost_point(cont),contours.index(cont)) for cont in
-    #                   contours]  # returns a list of the leftmost point of every contour (x,y)
-    leftmost_array = [(index, leftmost_point(contour)) for index, contour in enumerate(contours)]
-    # for i in xrange(len(contours)):
-    #     leftmost_array.append((leftmost_point(contours[i]), i))
-    leftmost_array.sort(key=lambda x: x[1])
-    print leftmost_array
-    sorted_contours = [contours[index] for index, data in
-                       leftmost_array]  # list of contours sorted in the order of leftmost points left to right
-    return sorted_contours
-
-
 def reverse(pair):
     return pair[1], pair[0]
 
@@ -35,34 +17,83 @@ def increase_contrast_brightness(image, alpha, beta):
     return image
 
 
-def draw_component(image, component):
-    """Draws component and frame of component on the image"""
-    for point in component.reversed_points():
-        cv2.rectangle(image, point, point, (255, 0, 0))
-    cv2.rectangle(image, reverse(component.upper_left_point()), reverse(component.lower_right_point()), (255, 0, 0))
+class Image:
+    def __init__(self, source=None, color_image=None):
+        if color_image is not None:
+            self.color_image = color_image
+            self.bw_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
+        else:
+            print source
+            self.bw_image = cv2.imread(source, 0)
+            self.color_image = cv2.imread(source)
 
+        self.bin_image = self.binirize_image()
+        self.__components = None
 
-def crop_to_component(image, component):
-    up = component.upper_left_point()
-    low = component.lower_right_point()
-    crop = image[up[0]:low[0], up[1]:low[1]]
-    return crop
+    def binirize_image(self):
+        length = max(len(self.bw_image), len(self.bw_image[0]))
+        self.bin_image = cv2.adaptiveThreshold(self.bw_image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,
+                                               int(length / 15) + length / 15 % 2 + 1,
+                                               15)  # TODO:C is not dynamic and does matter Note- doesn't work well with whatsapp
+        # compressed images
+        cv2.medianBlur(self.bin_image, 9, self.bin_image)
+        cv2.imwrite("Output/threshed.png", self.bin_image)
+        return self.bin_image
 
+    @property
+    def components(self):
+        if self.__components is None:
+            self.__components = list(self.find_connected_components())
+        return self.__components
 
-def contour_stuff(threshed_image, drawable_image):
-    cont_image, contours, hierarchy = cv2.findContours(threshed_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    left_to_right = left_to_right_contours(contours)
-    for i in xrange(len(left_to_right)):  # draw numbers for ordered contours
-        cv2.putText(drawable_image, str(i), leftmost_point(left_to_right[i]), cv2.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255),
-                    5)
-    cv2.drawContours(drawable_image, contours, -1, (255, 0, 255), 3)
+    # These methods used to be out of class, didn't change them since
+    FOUR_WAY_NEIGHBORS = 0
+    EIGHT_WAY_NEIGHBORS = 1
+
+    @staticmethod
+    def __four_way_neighbors(i, j):
+        return (i, j - 1), (i, j + 1), (i + 1, j), (i - 1, j)
+
+    @staticmethod
+    def eight_way_neighbors(i, j):
+        # return tuple(list(__four_way_neighbors(i, j)).extend(
+        #     ((i - 1, j - 1), (i - 1, j + 1), (i + 1, j - 1), (i + 1, j + 1))))  # Not sure why I insist on tuples
+        return (i, j - 1), (i, j + 1), (i + 1, j), (i - 1, j), (i - 1, j - 1), (i - 1, j + 1), (i + 1, j - 1), (
+            i + 1, j + 1)
+
+    def connected_component_starting_from(self, image, i, j, connectivity=EIGHT_WAY_NEIGHBORS):
+        points = list()
+        # Runs a BFS starting from image[i][j]
+        neighbors = (Image.__four_way_neighbors, Image.eight_way_neighbors)
+        neighbors = neighbors[connectivity]
+        queue = set()
+        queue.add((i, j))
+        while queue:
+            current_point = queue.pop()
+            points.append(current_point)
+            image[current_point[0]][current_point[1]] = 255
+            # cv2.imshow("debug",image)
+            for a, b in neighbors(current_point[0], current_point[1]):
+                if 0 <= a < len(image) and 0 <= b < len(image[a]) and is_black(image[a][b]):
+                    queue.add((a, b))
+        return Component(self, points)
+
+    def crop(self, upper_left, down_right):
+        self.__components = None
+        self.color_image = self.color_image[upper_left[1]:down_right[1], upper_left[0], down_right[0]]
+
+    def find_connected_components(self, connectivity=EIGHT_WAY_NEIGHBORS):
+        new_image = copy.copy(self.bin_image)
+        for i in xrange(len(new_image)):
+            for j in xrange(len(new_image[i])):
+                if is_black(new_image[i][j]):
+                    yield self.connected_component_starting_from(new_image, i, j, connectivity)
 
 
 # TODO: streamline data addition process
 
-def pre_process(image):
+def binirize_image(image):
     length = max(len(image), len(image[0]))
-    print length
     image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,
                                   int(length / 15) + length / 15 % 2 + 1,
                                   15)  # TODO:C is not dynamic and does matter Note- doesn't work well with whatsapp
@@ -82,18 +113,17 @@ def save_resource(image, components, name):
         cv2.imwrite(location + name + '_' + str(i) + ".png", crop_to_component(image, component))
 
 
-def main(source="resources/x.png", character='x'):
-    image = cv2.imread(source, 0)
+def main(source="Source/x.png", character='x'):
+    image = Image(source=source)
     # increase_contrast_brightness(image,1.5,0)
-    image = pre_process(image)
-    color_image = cv2.imread(source, 1)
-    for component in find_connected_components(image, EIGHT_WAY_NEIGHBORS):
-        draw_component(color_image, component)
+    color_image = image.color_image
+    components = image.components
+    for component in components:
+        component.draw_component()
     cv2.imshow("result", color_image)  # only if you want it to draw
     print "Press S to save, any other char to quit"
     if cv2.waitKey(0) & 0xFF == ord('s'):  # saves if you press S
         print('Saved!')
-        components = find_connected_components(image, EIGHT_WAY_NEIGHBORS)
         save_resource(image, components, character)
 
     # cv2.waitKey(0)
@@ -101,8 +131,12 @@ def main(source="resources/x.png", character='x'):
 
 
 class Component:
-    def __init__(self):
-        self.points = list()
+    def __init__(self, parent_image, points):
+        self.points = points
+        self.char = "unknown"
+        self.parent_image = parent_image
+        self.upper_left_point = min(self.points, key=lambda x: x[0])[0], min(self.points, key=lambda x: x[1])[1]
+        self.lower_right_point = max(self.points, key=lambda x: x[0])[0], max(self.points, key=lambda x: x[1])[1]
 
     def add_point(self, point):
         self.points.append(point)
@@ -110,17 +144,28 @@ class Component:
     def reversed_points(self):
         return (reverse(point) for point in self.points)
 
-    def upper_left_point(self):
-        return min(self.points, key=lambda x: x[0])[0], min(self.points, key=lambda x: x[1])[1]
-
-    def lower_right_point(self):
-        return max(self.points, key=lambda x: x[0])[0], max(self.points, key=lambda x: x[1])[1]
+    def image(self):
+        up = self.upper_left_point
+        low = self.lower_right_point
+        crop = self.parent_image.bin_image[up[0]:low[0], up[1]:low[1]]
+        return crop
 
     def __str__(self):
         return str(self.points)
 
     def __repr__(self):
-        return str(self.upper_left_point()) + "-" + str(self.lower_right_point())
+        return str(self.upper_left_point) + "-" + str(self.lower_right_point)
+
+    def draw_component(component):
+        """Draws component and frame of component on the image"""
+        # for point in component.reversed_points():
+        #     cv2.rectangle(image, point, point, (255, 0, 0))
+        cv2.rectangle(component.parent_image.color_image, reverse(component.upper_left_point),
+                      reverse(component.lower_right_point), (255, 0, 0))
+
+
+def is_black(point):
+    return not point
 
 
 FOUR_WAY_NEIGHBORS = 0
@@ -138,34 +183,37 @@ def eight_way_neighbors(i, j):
         i + 1, j + 1)
 
 
-def is_black(point):
-    return not point
-
-
-def connected_component_starting_from(image, i, j, connectivity=FOUR_WAY_NEIGHBORS):
-    return_value = Component()
-    # Runs a BFS starting from image[i][j]
-    neighbors = (four_way_neighbors, eight_way_neighbors)
-    neighbors = neighbors[connectivity]
-    queue = set()
-    queue.add((i, j))
-    while queue:
-        current_point = queue.pop()
-        return_value.add_point(current_point)
-        image[current_point[0]][current_point[1]] = 255
-        # cv2.imshow("debug",image)
-        for a, b in neighbors(current_point[0], current_point[1]):
-            if 0 <= a < len(image) and 0 <= b < len(image[a]) and is_black(image[a][b]):
-                queue.add((a, b))
-    return return_value
-
-
-def find_connected_components(image, connectivity=EIGHT_WAY_NEIGHBORS):
-    new_image = copy.copy(image)
-    for i in xrange(len(new_image)):
-        for j in xrange(len(new_image[i])):
-            if is_black(new_image[i][j]):
-                yield connected_component_starting_from(new_image, i, j, connectivity)
+# def connected_component_starting_from(image, i, j, connectivity=EIGHT_WAY_NEIGHBORS):
+#     return_value = Component(image)
+#     # Runs a BFS starting from image[i][j]
+#     neighbors = (__four_way_neighbors, eight_way_neighbors)
+#     neighbors = neighbors[connectivity]
+#     queue = set()
+#     queue.add((i, j))
+#     while queue:
+#         current_point = queue.pop()
+#         return_value.add_point(current_point)
+#         image[current_point[0]][current_point[1]] = 255
+#         # cv2.imshow("debug",image)
+#         for a, b in neighbors(current_point[0], current_point[1]):
+#             if 0 <= a < len(image) and 0 <= b < len(image[a]) and is_black(image[a][b]):
+#                 queue.add((a, b))
+#     return return_value
+#
+#
+# def find_connected_components(image, connectivity=EIGHT_WAY_NEIGHBORS):
+#     new_image = copy.copy(image.bin_image)
+#     for i in xrange(len(new_image)):
+#         for j in xrange(len(new_image[i])):
+#             if is_black(new_image[i][j]):
+#                 yield connected_component_starting_from(new_image, i, j, connectivity)
+#
+#
+def crop_to_component(image, component):
+    up = component.upper_left_point
+    low = component.lower_right_point
+    crop = image.bin_image[up[0]:low[0], up[1]:low[1]]
+    return crop
 
 
 if __name__ == "__main__":

@@ -2,27 +2,38 @@ import cv2
 import train
 import extractor
 import sys
-
+from extractor import Image
 
 def draw_and_number_components(image, components, text):
     for i, component in enumerate(components):
         # extractor.draw_component(image, component)
         char = text[i]
-        cv2.putText(image, text[i], extractor.reverse(component.upper_left_point()), cv2.FONT_HERSHEY_COMPLEX, 1,
+        cv2.putText(image, text[i], extractor.reverse(component.upper_left_point), cv2.FONT_HERSHEY_COMPLEX, 1,
                     (255, 0, 0))
 
 
+clf = train.Classifier()
+
+
+def extract_and_solve(image):
+    pass
+
+
+def predict_and_print_image(image):
+    components = image.components
+    print components
+    predictions = clf.predict(components)
+    draw_and_number_components(image.color_image, components, predictions)
+    cv2.imshow("im", image.color_image)
+
+
 def main(image_name="source/y2.jpg"):
-    image = cv2.imread(image_name, 0)
-    clr_image = cv2.imread(image_name)
-    image = extractor.pre_process(image)
-    components = extractor.find_connected_components(image, connectivity=extractor.EIGHT_WAY_NEIGHBORS)
-    test_data = [train.pre_proccess(extractor.crop_to_component(image, component)) for component in components]
-    clf = train.model()
-    predictions = clf.predict(test_data)
+    image = Image(image_name)
+    components = image.components
+    predictions = clf.predict(components)
     print predictions
-    draw_and_number_components(clr_image, extractor.find_connected_components(image), predictions)
-    cv2.imshow("im", clr_image)
+    draw_and_number_components(image.color_image, components, predictions)
+    cv2.imshow("im", image.color_image)
     cv2.waitKey(0)
 
 
