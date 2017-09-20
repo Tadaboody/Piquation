@@ -36,15 +36,24 @@ class Classifier(LinearSVC):
         for datas, targets in datasets:
             data.extend(datas)
             target.extend(targets)
-        # shape = [image.shape for image in data]
+        # shape = [global_image.shape for global_image in data]
         data = [self.pre_proccess(image) for image in data]
         # data_train, data_test, target_train, target_test = train_test_split(data, target, test_size=0.30 ) #for testing
         self.fit(data, target)
 
     @staticmethod
     def pre_proccess(image):
-        return cv2.resize(image, SIZE).flatten()
+        try:
+            a = cv2.resize(image, SIZE).flatten()
+        except:
+            a = image.flatten()
+        return a
 
-    def predict(self, components):
-        to = [self.pre_proccess(component.image()) for component in components]
-        return super(Classifier, self).predict(to)
+    def predict(self, image):
+        a = "N/A"
+        try:
+            a= super(Classifier, self).predict([self.pre_proccess(image)])[0]
+        except:
+            pass
+        print a
+        return a

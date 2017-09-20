@@ -32,11 +32,11 @@ def main():
 def main(image_name="source/y2.jpg"):
     color_image = cv2.imread(image_name, 1)
     cv2.imshow("orig", color_image)
-    image = cv2.imread(image_name, 0)
-    ret, image = cv2.threshold(image, 60, 255, cv2.THRESH_BINARY)  # TODO: dynamic thresholding
-    cv2.medianBlur(image, 9, image)
-    cv2.imshow("pre_cont", image)
-    cont_image, contours, hierarchy = cv2.findContours(image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    global_image = cv2.imread(image_name, 0)
+    ret, global_image = cv2.threshold(global_image, 60, 255, cv2.THRESH_BINARY)  # TODO: dynamic thresholding
+    cv2.medianBlur(global_image, 9, global_image)
+    cv2.imshow("pre_cont", global_image)
+    cont_image, contours, hierarchy = cv2.findContours(global_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     left_to_right = left_to_right_contours(contours)
     for i in xrange(len(left_to_right)): # draw numbers for ordered contours
         cv2.putText(color_image, str(i), leftmost_point(left_to_right[i]), cv2.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 5)
