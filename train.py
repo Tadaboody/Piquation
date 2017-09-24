@@ -6,7 +6,7 @@ SIZE = (30, 30)
 
 
 def char_not_empty(char):
-    return bool(os.listdir("resources/" + char))
+    return bool(os.listdir("Resources/" + char))
 
 
 def normalize(image):
@@ -18,7 +18,7 @@ def normalize(image):
 
 
 def load_data_from_resources(character):
-    location = "resources/" + character
+    location = "Resources/" + character
     return [cv2.imread(location + "/" + filename, 0) for filename in
             os.listdir(location)], [character for i in
                                     os.listdir(location)]
@@ -29,7 +29,7 @@ def load_data_from_resources(character):
 class Classifier(LinearSVC):
     def __init__(self):
         super(Classifier, self).__init__()
-        datasets = [load_data_from_resources(character) for character in next(os.walk("resources"))[1] if
+        datasets = [load_data_from_resources(character) for character in next(os.walk("Resources"))[1] if
                     char_not_empty(character)]
         data = []
         target = []
