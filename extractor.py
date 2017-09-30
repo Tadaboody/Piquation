@@ -21,10 +21,12 @@ def increase_contrast_brightness(image, alpha, beta):
 class Image(object):
     @classmethod
     def from_image(cls, image):
+        """copy constructor from another image"""
         a = cls(image.source)
         a.color_image = image.color_image
         a.bw_image = image.bw_image
         a.binirize_image()
+        a.imshow()
         return a
 
     def __init__(self, source):
@@ -35,9 +37,20 @@ class Image(object):
         self.bin_image = self.binirize_image()
         self.__components = None
 
-    WINDOW_SIZE = 15
+    WINDOW_SIZE = 4
+    def erase_drawing(self):
+        """Resets Drawn components"""
+        self.color_image = self.orignal_color_image
+
+    def dynamic_binirize_image(self):
+        self.binirize_image()
+        self.draw_components()
+        self.imshow()
+        cv2.createTrackbar("Window Size","Image",self.WINDOW_SIZE,50,onChange=None)
+        self.erase_drawing()
 
     def binirize_image(self):
+        """Updates self.bin_image using existing bw_image and adaptive thresh"""
         length = max(len(self.bw_image), len(self.bw_image[0]))
         self.bin_image = cv2.adaptiveThreshold(self.bw_image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,
                                                int(length / self.WINDOW_SIZE) + length / self.WINDOW_SIZE % 2 + 1,
@@ -86,10 +99,13 @@ class Image(object):
         return Component(self, points)
 
     def crop(self, r):
+        """crops image by dimensions r. r is the bounding rectangle from selectROI"""
+        self.erase_drawing()
         self.__components = None
         self.color_image = self.color_image[int(r[1]):int(r[1] + r[3]), int(r[0]):int(r[0] + r[2])]
         self.bw_image = self.bw_image[int(r[1]):int(r[1] + r[3]), int(r[0]):int(r[0] + r[2])]
         self.binirize_image()
+        self.color_image = self.color_image
 
     def find_connected_components(self, connectivity=EIGHT_WAY_NEIGHBORS):
         new_image = copy.copy(self.bin_image)
@@ -110,9 +126,6 @@ clf = train.Classifier()
 
 
 class EquationImage(Image):
-    def __init__(self, source):
-        super(EquationImage, self).__init__(source)
-        self.string = [component.char for component in self.sorted_components]
 
     def equation_string(self):
         return "".join(self.string)
@@ -122,6 +135,9 @@ class EquationImage(Image):
             cv2.putText(self.color_image, component.char, reverse(component.upper_left_point), cv2.FONT_HERSHEY_COMPLEX,
                         1,
                         (255, 0, 0))
+    @property
+    def string(self):
+        return [component.char for component in self.sorted_components]
 
     @property
     def sorted_components(self):
@@ -175,9 +191,6 @@ class Component:
     def add_point(self, point):
         self.points.append(point)
 
-    def reversed_points(self):
-        return (reverse(point) for point in self.points)
-
     def image(self):
         up = self.upper_left_point
         low = self.lower_right_point
@@ -195,7 +208,6 @@ class Component:
         if self.__char == "unknown":
             self.__char = clf.predict(self.image())
         return self.__char
-
 
     def set_char(self, val):
         self.__char = val
