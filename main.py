@@ -21,41 +21,12 @@ def left_to_right_contours(contours):
 
 
 def main():
-    color_image = cv2.imread("source/squares.png", 0)
+    color_image = cv2.imread("gridtest.png", 0)
     #  a = [[1,2,3,4,5], [6,7,8,9,10], [11,12,13,14,15], [11,12,13,14,15], [11,12,13,14,15]]
     cv2.imshow("before", color_image)
     color_image = remove_grid.remove_page_grid(color_image, 51)
     cv2.imshow("after", color_image)
     cv2.waitKey(0)
-
-"""
-def main(image_name="source/y2.jpg"):
-    color_image = cv2.imread(image_name, 1)
-    cv2.imshow("orig", color_image)
-    global_image = cv2.imread(image_name, 0)
-    ret, global_image = cv2.threshold(global_image, 60, 255, cv2.THRESH_BINARY)  # TODO: dynamic thresholding
-    cv2.medianBlur(global_image, 9, global_image)
-    cv2.imshow("pre_cont", global_image)
-    cont_image, contours, hierarchy = cv2.findContours(global_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    left_to_right = left_to_right_contours(contours)
-    for i in xrange(len(left_to_right)): # draw numbers for ordered contours
-        cv2.putText(color_image, str(i), leftmost_point(left_to_right[i]), cv2.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 5)
-    cv2.drawContours(color_image, contours, -1, (255, 0, 255), 3)
-    # main_contour = contours[2]
-    # leftmost = tuple(main_contour[main_contour[:, :, 0].argmin()][0])
-    # print leftmost
-    # rect = cv2.minAreaRect(main_contour)
-    # print rect
-    # int_rect = [[int(num) for num in x] for x in rect if type(x) is type(tuple)]
-    # print int_rect
-    # cv2.rectangle(color_image, rect[0], rect[1], (0, 255, 0))
-    # print rect
-    # cv2.convexHull(main_contour)
-    # print len(contours)
-    cv2.imshow("conts", color_image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-"""
 
 if __name__ == "__main__":
     main()

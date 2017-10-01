@@ -38,6 +38,7 @@ class Image(object):
         self.__components = None
 
     WINDOW_SIZE = 4
+
     def erase_drawing(self):
         """Resets Drawn components"""
         self.color_image = self.orignal_color_image
@@ -46,7 +47,7 @@ class Image(object):
         self.binirize_image()
         self.draw_components()
         self.imshow()
-        cv2.createTrackbar("Window Size","Image",self.WINDOW_SIZE,50,onChange=None)
+        cv2.createTrackbar("Window Size", "Image", self.WINDOW_SIZE, 50, onChange=None)
         self.erase_drawing()
 
     def binirize_image(self):
@@ -126,6 +127,8 @@ clf = train.Classifier()
 
 
 class EquationImage(Image):
+    def __init__(self, source):
+        super(EquationImage, self).__init__(source)
 
     def equation_string(self):
         return "".join(self.string)
@@ -135,6 +138,7 @@ class EquationImage(Image):
             cv2.putText(self.color_image, component.char, reverse(component.upper_left_point), cv2.FONT_HERSHEY_COMPLEX,
                         1,
                         (255, 0, 0))
+
     @property
     def string(self):
         return [component.char for component in self.sorted_components]
@@ -143,9 +147,10 @@ class EquationImage(Image):
     def sorted_components(self):
         a = sorted(self.components, key=lambda x: x.upper_left_point[1])
         for index, component in enumerate(a):
-            if index > 0 and component.char == a[index - 1].char == '-':
+            if index > 0 and (component.char == a[index - 1].char == '-' or component.char == '='):
                 component.minus_to_equal(a[index - 1])
-                del a[index - 1]
+                a.pop(index - 1)
+        # print a
         return a
 
         # for component in components:
@@ -159,7 +164,6 @@ class EquationImage(Image):
 class ResourceImage(Image):
     def save_resources(self, name):
         # reads file names and saves components as highest num in names+1.png
-        location = "Resources/" + name + "/"
         for component in self.components:
             component.save_component_as(name)
 
@@ -201,7 +205,7 @@ class Component:
         return str(self.points)
 
     def __repr__(self):
-        return str(self.upper_left_point) + "-" + str(self.lower_right_point)
+        return str(self.upper_left_point) + "-" + str(self.lower_right_point) + self.char
 
     @property
     def char(self):
@@ -215,20 +219,25 @@ class Component:
 
     def minus_to_equal(self, other_minus):
         self.__char = '='
+        # self.points = self.points.extend(other_minus.points)
+        # self.upper_left_point = min(self.points, key=lambda x: x[0])[0], min(self.points, key=lambda x: x[1])[1]
+        # self.lower_right_point = max(self.points, key=lambda x: x[0])[0], max(self.points, key=lambda x: x[1])[1]
 
     def save_component_as(self, char):
         location = "Resources/" + char + "/"
         i = 0
+        if not os.path.exists(location):
+            os.mkdir(location)
         while os.path.exists(location + char + "_" + str(i) + ".png"):
             i += 1
         cv2.imwrite(location + char + '_' + str(i) + ".png", self.image())
 
-    def draw_component(component):
-        """Draws component and frame of component on the parent global_image"""
+    def draw_component(self):
+        """Draws component and frame of component on the parent color_image"""
         # for point in component.reversed_points():
         #     cv2.rectangle(global_image, point, point, (255, 0, 0))
-        cv2.rectangle(component.parent_image.color_image, reverse(component.upper_left_point),
-                      reverse(component.lower_right_point), (255, 0, 0))
+        cv2.rectangle(self.parent_image.color_image, reverse(self.upper_left_point),
+                      reverse(self.lower_right_point), (255, 0, 0))
 
 
 def is_black(point):
@@ -244,38 +253,10 @@ def four_way_neighbors(i, j):
 
 
 def eight_way_neighbors(i, j):
-    # return tuple(list(four_way_neighbors(i, j)).extend(
-    #     ((i - 1, j - 1), (i - 1, j + 1), (i + 1, j - 1), (i + 1, j + 1))))  # Not sure why I insist on tuples
     return (i, j - 1), (i, j + 1), (i + 1, j), (i - 1, j), (i - 1, j - 1), (i - 1, j + 1), (i + 1, j - 1), (
         i + 1, j + 1)
 
 
-# def connected_component_starting_from(global_image, i, j, connectivity=EIGHT_WAY_NEIGHBORS):
-#     return_value = Component(global_image)
-#     # Runs a BFS starting from global_image[i][j]
-#     neighbors = (__four_way_neighbors, eight_way_neighbors)
-#     neighbors = neighbors[connectivity]
-#     queue = set()
-#     queue.add((i, j))
-#     while queue:
-#         current_point = queue.pop()
-#         return_value.add_point(current_point)
-#         global_image[current_point[0]][current_point[1]] = 255
-#         # cv2.imshow("debug",global_image)
-#         for a, b in neighbors(current_point[0], current_point[1]):
-#             if 0 <= a < len(global_image) and 0 <= b < len(global_image[a]) and is_black(global_image[a][b]):
-#                 queue.add((a, b))
-#     return return_value
-#
-#
-# def find_connected_components(global_image, connectivity=EIGHT_WAY_NEIGHBORS):
-#     new_image = copy.copy(global_image.bin_image)
-#     for i in xrange(len(new_image)):
-#         for j in xrange(len(new_image[i])):
-#             if is_black(new_image[i][j]):
-#                 yield connected_component_starting_from(new_image, i, j, connectivity)
-#
-#
 def crop_to_component(image, component):
     up = component.upper_left_point
     low = component.lower_right_point
