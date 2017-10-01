@@ -60,14 +60,19 @@ def solve_equation(equation_string):
     :param equation_string: a string that represents an equation system
     :return: string containing the solution
     """
-    equation_data = arrange_system_equation_data(equation_string)  # arranges the data in 2 tuples - 1 for each eq
 
-    eq1d = list(equation_data[0])  # first eq data
-    eq2d = list(equation_data[1])  # second eq data
-    eq2d = eq1d + eq2d  # concatenate both equations
-    solution = solve_simple_equation(eq2d[0], eq2d[1], eq2d[2], eq2d[3], eq2d[4], eq2d[5])  # get x,y solution
-    re_string = "x: " + str(solution[0]) + "\ny: " + str(solution[1])  # format output string
-    return re_string
+    if not equation_string.__contains__(";"):
+        return solve_single_equation(equation_string)
+    else:
+        equation_data = arrange_system_equation_data(equation_string)  # arranges the data in 2 tuples - 1 for each eq
+
+
+        eq1d = list(equation_data[0])  # first eq data
+        eq2d = list(equation_data[1])  # second eq data
+        eq2d = eq1d + eq2d  # concatenate both equations
+        solution = solve_simple_equation(eq2d[0], eq2d[1], eq2d[2], eq2d[3], eq2d[4], eq2d[5])  # get x,y solution
+        re_string = "x: " + str(solution[0]) + "\ny: " + str(solution[1])  # format output string
+        return re_string
 
 
 def arrange_system_equation_data(equation_string):
@@ -138,5 +143,23 @@ def even_or_odd(number):
 # print solve_equation(raw_input("Insert Equation System Data: "))
 
 
+def solve_single_equation(equation_string):
+    """
+    receives a string that represents an equation and solves it
+    for example:    2x=1
+    :param equation_string: a string that represents an equation
+    :return: string containing the solution
+    """
+    print "Equation: ", equation_string
+    equation_data = arrange_equation_data(equation_string)  # arranges the data in 2 tuples - 1 for each eq
+    if equation_data[0] != 0:
+        eqd = list([equation_data[0], equation_data[2]])
+    else:
+        eqd = list([equation_data[1], equation_data[2]])
+
+    solution = -eqd[0]/eqd[1]
+    re_string = "Answer: " + str(solution) + "\n"  # format output string
+    return re_string
 
 
+print solve_equation("2x+1=3")
