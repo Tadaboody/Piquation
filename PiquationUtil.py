@@ -160,6 +160,3 @@ def solve_single_equation(equation_string):
     solution = -eqd[0]/eqd[1]
     re_string = "Answer: " + str(solution) + "\n"  # format output string
     return re_string
-
-
-print solve_equation("2x+1=3")
