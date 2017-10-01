@@ -98,12 +98,12 @@ def raw_data_into_eq_data(data_list, mode, a, b, c):  # mode 1 => add, mode -1 =
             a += mode
         elif element == 'y':  # "y"
             b += mode
-        elif len(element) == 1:  # "c"
+        elif element[-1] == 'x':  # "ax"
+            a += mode*int(element[:-1])
+        elif element[-1] == 'y':  # "by"
+            b += mode*int(element[:-1])
+        elif len(element) > 0:  # "c"
             c += mode*int(element)
-        elif element[1] == 'x':  # "ax"
-            a += mode*int(element[0])
-        elif element[1] == 'y':  # "by"
-            b += mode*int(element[0])
     return a, b, c
 
 
@@ -136,6 +136,7 @@ def even_or_odd(number):
         return -1
 # correct way to test the math part of things:
 # print solve_equation(raw_input("Insert Equation System Data: "))
+
 
 
 
