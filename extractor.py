@@ -31,8 +31,8 @@ class Image(object):
 
     def __init__(self, source):
         self.source = source
-        self.bw_image = cv2.imread(source, 0)
-        self.color_image = cv2.imread(source)
+        self.bw_image = cv2.resize(cv2.imread(source, 0),(800,600))
+        self.color_image = cv2.resize(cv2.imread(source),(800,600))
         self.orignal_color_image = self.color_image
         self.bin_image = self.binirize_image()
         self.__components = None
@@ -54,10 +54,12 @@ class Image(object):
         """Updates self.bin_image using existing bw_image and adaptive thresh"""
         length = max(len(self.bw_image), len(self.bw_image[0]))
         self.bin_image = cv2.adaptiveThreshold(self.bw_image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,
-                                               int(length / self.WINDOW_SIZE) + length / self.WINDOW_SIZE % 2 + 1,
-                                               15)  # TODO:C is not dynamic and does matter Note- doesn't work well with whatsapp
+                                              int(length / self.WINDOW_SIZE) + length / self.WINDOW_SIZE % 2 + 1,
+                                              15)  # TODO:C is not dynamic and does matter Note- doesn't work well with whatsapp
+        # self.bin_image = cv2.threshold(self.bw_image, 180, 255, cv2.THRESH_BINARY)[1]
+        # print self.bin_image
         # compressed images
-        cv2.medianBlur(self.bin_image, 9, self.bin_image)
+        cv2.medianBlur(self.bin_image, 13, self.bin_image)
         cv2.imwrite("Output/threshed.png", self.bin_image)
         return self.bin_image
 
@@ -121,6 +123,7 @@ class Image(object):
 
     def imshow(self):
         cv2.imshow("Image", self.color_image)
+        cv2.imshow("Thresh" , self.bin_image)
 
 
 clf = train.Classifier()
