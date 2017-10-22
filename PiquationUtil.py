@@ -157,6 +157,6 @@ def solve_single_equation(equation_string):
     else:
         eqd = list([equation_data[1], equation_data[2]])
 
-    solution = -eqd[0]/eqd[1]
+    solution = -float(eqd[1])/eqd[0]
     re_string = "Answer: " + str(solution) + "\n"  # format output string
     return re_string
