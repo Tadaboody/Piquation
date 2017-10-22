@@ -21,7 +21,7 @@ def left_to_right_contours(contours):
 
 
 def main():
-    color_image = cv2.imread("gridtest.png", 0)
+    color_image = cv2.imread("Source/squares.png", 0)
     #  a = [[1,2,3,4,5], [6,7,8,9,10], [11,12,13,14,15], [11,12,13,14,15], [11,12,13,14,15]]
     cv2.imshow("before", color_image)
     color_image = remove_grid.remove_page_grid(color_image, 51)
